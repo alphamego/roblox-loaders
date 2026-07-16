@@ -53,6 +53,28 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/alphamego/roblox-load
 
 Menu toggle: **RightControl** / **RightShift**
 
+## Scriptos (3 libraries)
+
+From [fullysore/Scriptos](https://github.com/fullysore/Scriptos) — three separate UI libs:
+
+**Atlanta** — purple dock UI, blur, configs, Drawing + file APIs. Toggle: **Insert**
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/alphamego/roblox-loaders/main/scriptos_atlanta_loader.lua"))()
+```
+
+**Sonder** (Scoot UI by samet) — mint theme, search, resize. Toggle: **RightControl**
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/alphamego/roblox-loaders/main/scriptos_sonder_loader.lua"))()
+```
+
+**Linoria Rewrite** — purple Linoria fork with rainbow. Toggle: **RightControl** / **RightShift**
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/alphamego/roblox-loaders/main/scriptos_linoria_rewrite_loader.lua"))()
+```
+
 ## Local
 
 ```lua
