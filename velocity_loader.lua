@@ -1,14 +1,13 @@
 --[[
-  Velocity UI loader — dementiaenjoyer velocity (source + example combined).
-  Pinned commit: 2c77447
-  Uses patched local velocity.lua (fixes menu flash/disappear race).
+  Velocity UI loader — loads patched velocity.lua from your GitHub.
+  Menu toggle: End
 ]]
 
 print("[Velocity] loader start")
 repeat task.wait() until game:IsLoaded()
 
-local VELOCITY_URL =
-	"https://raw.githubusercontent.com/dementiaenjoyer/UI-LIBRARIES/2c77447bf98d60361b47b9ffb3159d018a4e387b/velocity/source%20and%20example.lua"
+local GH = "https://raw.githubusercontent.com/alphamego/roblox-loaders/main"
+local VELOCITY_URL = getgenv().VELOCITY_LIB_URL or (GH .. "/velocity.lua")
 
 local PATCH_OPEN_RACE = [[
         self._openToken = (self._openToken or 0) + 1
@@ -93,7 +92,7 @@ end
 
 local library, settings = tryLocal()
 if not library then
-	print("[Velocity] fetching GitHub (large file, may take a few seconds)")
+	print("[Velocity] fetching:", VELOCITY_URL)
 	library, settings = loadFromSource("velocity", httpGet(VELOCITY_URL))
 end
 
@@ -101,4 +100,4 @@ getgenv().Velocity = library
 getgenv().velocity = library
 getgenv().velocity_settings = settings
 
-print("[Velocity] loaded — toggle menu with End")
+print("[Velocity] ok — toggle menu: End")
