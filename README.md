@@ -82,3 +82,13 @@ loadstring(readfile("vader_loader.lua"))()
 ```
 
 Menu toggle: **Insert** / **RightShift**
+
+## LinoriaModded (black / purple)
+
+Mobile Linoria fork with Plex/ProggyClean font, optional ghost drag outline, black/purple theme.
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/alphamego/roblox-loaders/main/linoriamodded_loader.lua"))()
+```
+
+Menu toggle: **RightControl** / **RightShift**. Ghost drag: UI Settings tab.
