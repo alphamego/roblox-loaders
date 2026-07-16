@@ -261,6 +261,50 @@ do
 		end,
 	})
 
+	-- UI Scale: Default = classic 100%, Compact/Large resize live. Saved to config + ui_scale.txt
+	local ScalePresets = Library.UIScalePresets or { "Default", "Compact", "Large", "Extra Large" }
+	local CurrentPreset = Library:GetUIScalePreset()
+	if CurrentPreset == "Custom" then
+		CurrentPreset = "Default"
+	end
+	local SyncingScale = false
+
+	Left:AddDropdown("UIScalePreset", {
+		Text = "UI Scale",
+		Values = ScalePresets,
+		Default = CurrentPreset,
+		Tooltip = "Default = normal Linoria size. Compact = smaller. Large / Extra Large = bigger. Saves automatically.",
+		Callback = function(v)
+			if SyncingScale then return end
+			SyncingScale = true
+			Library:SetUIScalePreset(v, true)
+			if Options.UIScalePercent then
+				Options.UIScalePercent:SetValue(Library:GetUIScalePercent())
+			end
+			SyncingScale = false
+		end,
+	})
+
+	Left:AddSlider("UIScalePercent", {
+		Text = "UI Scale %",
+		Default = Library:GetUIScalePercent(),
+		Min = 70,
+		Max = 150,
+		Rounding = 0,
+		Compact = false,
+		Tooltip = "Fine-tune scale. Saved with your config and across reloads.",
+		Callback = function(v)
+			if SyncingScale then return end
+			SyncingScale = true
+			Library:SetUIScale(v, true)
+			local Preset = Library:GetUIScalePreset()
+			if Options.UIScalePreset and Preset ~= "Custom" and Options.UIScalePreset.Value ~= Preset then
+				Options.UIScalePreset:SetValue(Preset)
+			end
+			SyncingScale = false
+		end,
+	})
+
 	Left:AddToggle("WatermarkToggle", {
 		Text = "Show watermark",
 		Default = true,

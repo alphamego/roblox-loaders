@@ -72,6 +72,19 @@ ScreenGui.DisplayOrder = 999
 ScreenGui.ResetOnSpawn = false
 ParentUI(ScreenGui)
 
+-- Live UI scaling (UIScale). Persists across reloads via LinoriaModded/ui_scale.txt
+local ScreenGuiScale = Instance.new("UIScale")
+ScreenGuiScale.Name = "LinoriaUIScale"
+ScreenGuiScale.Scale = 1
+ScreenGuiScale.Parent = ScreenGui
+local UI_SCALE_FILE = "LinoriaModded/ui_scale.txt"
+local UI_SCALE_PRESETS = {
+	Default = 1,
+	Compact = 0.85,
+	Large = 1.15,
+	["Extra Large"] = 1.3,
+}
+
 -- Custom Plex font (ProggyClean.ttf via getcustomasset). Falls back to Enum.Font.Code.
 local CustomFontFace = nil
 do
@@ -537,6 +550,73 @@ function Library:SetDPIScale(value: number)
     
     DPIScale = value / 100
     Library.MinSize = (if Library.IsMobile then Vector2.new(550, 200) else Vector2.new(550, 300)) * DPIScale
+end
+
+function Library:GetDPIScale()
+	return DPIScale * 100
+end
+
+function Library:GetUIScale()
+	return ScreenGuiScale.Scale
+end
+
+function Library:GetUIScalePercent()
+	return math.floor(ScreenGuiScale.Scale * 100 + 0.5)
+end
+
+function Library:GetUIScalePreset()
+	local Scale = ScreenGuiScale.Scale
+	for Name, Value in pairs(UI_SCALE_PRESETS) do
+		if math.abs(Value - Scale) < 0.01 then
+			return Name
+		end
+	end
+	return "Custom"
+end
+
+--- Live-scales the whole UI. Accepts 0.5–2.0 or percent 50–200. Optionally persists.
+function Library:SetUIScale(Value: number, Persist: boolean?)
+	assert(type(Value) == "number", "Expected number for UI scale, got " .. typeof(Value))
+	if Value > 3 then
+		Value = Value / 100
+	end
+	Value = math.clamp(Value, 0.5, 2)
+	ScreenGuiScale.Scale = Value
+	Library.UIScaleValue = Value
+
+	if Persist ~= false and typeof(writefile) == "function" then
+		pcall(function()
+			if typeof(makefolder) == "function" then
+				if typeof(isfolder) ~= "function" or not isfolder("LinoriaModded") then
+					makefolder("LinoriaModded")
+				end
+			end
+			writefile(UI_SCALE_FILE, tostring(Value))
+		end)
+	end
+
+	return Value
+end
+
+function Library:SetUIScalePreset(Name: string, Persist: boolean?)
+	local Scale = UI_SCALE_PRESETS[Name] or UI_SCALE_PRESETS.Default
+	return Library:SetUIScale(Scale, Persist)
+end
+
+Library.UIScalePresets = { "Default", "Compact", "Large", "Extra Large" }
+Library.UIScaleValue = 1
+
+-- Restore last saved scale (before window is built so it applies immediately)
+do
+	local Restored = 1
+	if typeof(isfile) == "function" and typeof(readfile) == "function" and isfile(UI_SCALE_FILE) then
+		local Ok, Raw = pcall(readfile, UI_SCALE_FILE)
+		local Num = Ok and tonumber(Raw)
+		if Num then
+			Restored = Num
+		end
+	end
+	Library:SetUIScale(Restored, false)
 end
 
 function Library:SafeCallback(Func, ...)
@@ -6321,7 +6401,7 @@ end
 do
     local WatermarkOuter = Library:Create("Frame", {
         BorderColor3 = Color3.new(0, 0, 0);
-        Position = UDim2.new(0, 359, 0, -40);
+        Position = UDim2.new(0, 420, 0, -40);
         Size = UDim2.new(0, 176, 0, 24);
         ZIndex = 200;
         Visible = false;
