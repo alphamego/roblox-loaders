@@ -5,7 +5,7 @@ local ThemeManager = {} do
 
 	ThemeManager.Library = nil
 	ThemeManager.BuiltInThemes = {
-		['BlackPurple'] 	= { 1, httpService:JSONDecode('{"FontColor":"ffffff","FontColor2":"ebebf5","MainColor":"121216","AccentColor":"6e6eb3","SelectedTabColor":"6e6eb3","BackgroundColor":"0c0c0e","OutlineColor":"282830"}') },
+		['BlackPurple'] 	= { 1, httpService:JSONDecode('{"FontColor":"ffffff","FontColor2":"e6e6eb","MainColor":"0a0a0a","AccentColor":"8000ff","SelectedTabColor":"8000ff","BackgroundColor":"000000","OutlineColor":"1e1e1e"}') },
 		['Default'] 		= { 2, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"1c1c1c","AccentColor":"0055ff","BackgroundColor":"141414","OutlineColor":"323232"}') },
 		['BBot'] 			= { 3, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"1e1e1e","AccentColor":"7e48a3","BackgroundColor":"232323","OutlineColor":"141414"}') },
 		['Fatality']		= { 4, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"1e1842","AccentColor":"c50754","BackgroundColor":"191335","OutlineColor":"3c355d"}') },

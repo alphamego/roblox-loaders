@@ -293,18 +293,18 @@ local Library = {
     RegistryMap = {};
     HudRegistry = {};
 
-    -- colors and font (BlackPurple default) --
+    -- colors and font (BlackPurple / vanta default) --
     FontColor = Color3.fromRGB(255, 255, 255);
-    FontColor2 = Color3.fromRGB(235, 235, 245);
-    MainColor = Color3.fromRGB(18, 18, 22);
-    BackgroundColor = Color3.fromRGB(12, 12, 14);
+    FontColor2 = Color3.fromRGB(230, 230, 235);
+    MainColor = Color3.fromRGB(10, 10, 10);
+    BackgroundColor = Color3.fromRGB(0, 0, 0);
 
-    AccentColor = Color3.fromRGB(110, 110, 179);
-    DisabledAccentColor = Color3.fromRGB(142, 142, 142);
-    SelectedTabColor = Color3.fromRGB(110, 110, 179);
+    AccentColor = Color3.fromRGB(128, 0, 255);
+    DisabledAccentColor = Color3.fromRGB(90, 90, 90);
+    SelectedTabColor = Color3.fromRGB(128, 0, 255);
 
-    OutlineColor = Color3.fromRGB(40, 40, 48);
-    DisabledOutlineColor = Color3.fromRGB(60, 60, 68);
+    OutlineColor = Color3.fromRGB(30, 30, 30);
+    DisabledOutlineColor = Color3.fromRGB(50, 50, 50);
 
     DisabledTextColor = Color3.fromRGB(142, 142, 142);
 
@@ -6321,8 +6321,8 @@ end
 do
     local WatermarkOuter = Library:Create("Frame", {
         BorderColor3 = Color3.new(0, 0, 0);
-        Position = UDim2.new(0, 100, 0, -25);
-        Size = UDim2.new(0, 213, 0, 20);
+        Position = UDim2.new(0, 359, 0, -40);
+        Size = UDim2.new(0, 176, 0, 24);
         ZIndex = 200;
         Visible = false;
         Parent = ScreenGui;
