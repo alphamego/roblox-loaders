@@ -9,9 +9,9 @@ print("[Vader] loader start")
 repeat task.wait() until game:IsLoaded()
 
 -- Set this after uploading to YOUR GitHub (raw URL to this file or vader.lua)
+local GH = "https://raw.githubusercontent.com/alphamego/roblox-loaders/main"
 local LOADER_RAW = getgenv().VADER_LOADER_URL
-local LIB_RAW = getgenv().VADER_LIB_URL
-	or "https://raw.githubusercontent.com/dementiaenjoyer/UI-LIBRARIES/2c77447bf98d60361b47b9ffb3159d018a4e387b/vader_remake/src.lua"
+local LIB_RAW = getgenv().VADER_LIB_URL or (GH .. "/vader.lua")
 
 local loadstring = loadstring or load
 if not loadstring then

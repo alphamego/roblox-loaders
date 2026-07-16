@@ -1,4 +1,2 @@
---[[
-  ONE-LINER — paste in executor (no readfile / no local files needed)
-]]
+-- Paste this ONE line in your executor (no readfile needed)
 loadstring(game:HttpGet("https://raw.githubusercontent.com/alphamego/roblox-loaders/main/vader_loader.lua"))()
