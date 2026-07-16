@@ -63,8 +63,13 @@ end)
 
 getgenv().Library = Library
 getgenv().Linoria = Library
+getgenv().Toggles = Library.Toggles
+getgenv().Options = Library.Options
 getgenv().ThemeManager = ThemeManager
 getgenv().SaveManager = SaveManager
+
+local Toggles = Library.Toggles
+local Options = Library.Options
 
 local Window = Library:CreateWindow({
 	Title = "LinoriaModded - Component Showcase",
@@ -72,13 +77,15 @@ local Window = Library:CreateWindow({
 	AutoShow = true,
 	TabPadding = 8,
 	MenuFadeTime = 0.2,
+	-- Wider so most tabs fit; leftover tabs scroll horizontally (mouse wheel / touch swipe)
+	Size = UDim2.fromOffset(720, 560),
 })
 
 local Tabs = {
 	Controls = Window:AddTab("Controls"),
-	Dropdowns = Window:AddTab("Dropdowns & Colors"),
-	Keybinds = Window:AddTab("Keybinds & Deps"),
-	Labels = Window:AddTab("Labels & Misc"),
+	Dropdowns = Window:AddTab("Dropdowns"),
+	Keybinds = Window:AddTab("Keybinds"),
+	Labels = Window:AddTab("Labels"),
 	UISettings = Window:AddTab("UI Settings"),
 }
 
@@ -204,18 +211,21 @@ do
 		Rounding = 0,
 	})
 
-	Toggles.ParentToggle:OnChanged(function()
-		Options.ChildSlider:SetVisible(Toggles.ParentToggle.Value)
-	end)
-	Options.ChildSlider:SetVisible(false)
+	-- Use Library.Toggles / Options (not bare globals)
+	if Toggles.ParentToggle and Options.ChildSlider then
+		Options.ChildSlider:SetVisible(false)
+		Toggles.ParentToggle:OnChanged(function()
+			Options.ChildSlider:SetVisible(Toggles.ParentToggle.Value)
+		end)
+	end
 end
 
 -- Labels & Misc
 do
 	local Left = Tabs.Labels:AddLeftGroupbox("Info")
 	Left:AddLabel("LinoriaModded showcase")
-	Left:AddLabel("Plex / ProggyClean font via getcustomasset")
-	Left:AddLabel("Mobile + DPI from mstudio45 base")
+	Left:AddLabel("Scroll the tab bar (wheel / swipe) if tabs overflow")
+	Left:AddLabel("Mobile: swipe the tab row horizontally")
 	Left:AddDivider()
 	Left:AddLabel("Toggle menu: RightControl / RightShift")
 end
@@ -242,6 +252,42 @@ do
 		end,
 	})
 
+	Left:AddDropdown("UIFontPicker", {
+		Text = "UI Font",
+		Values = Library.AvailableFonts or { "Plex", "Code", "Ubuntu", "SourceSans", "Gotham", "Arcade" },
+		Default = Library.CurrentFontName or "Plex",
+		Callback = function(v)
+			Library:SetUIFont(v)
+		end,
+	})
+
+	Left:AddToggle("WatermarkToggle", {
+		Text = "Show watermark",
+		Default = true,
+		Callback = function(v)
+			if v then
+				Library:StartWatermark()
+			else
+				Library:StopWatermark()
+			end
+		end,
+	})
+
+	Left:AddInput("WatermarkFormat", {
+		Text = "Watermark text",
+		Default = Library.WatermarkFormat or "LinoriaModded | {fps} FPS",
+		Placeholder = "Use {fps} for FPS",
+		Finished = true,
+		Callback = function(v)
+			if type(v) == "string" and #v > 0 then
+				Library:SetWatermarkFormat(v)
+				if Library.WatermarkEnabled then
+					Library:StartWatermark()
+				end
+			end
+		end,
+	})
+
 	Left:AddDropdown("NotifySide", {
 		Text = "Notify side",
 		Values = { "Left", "Right" },
@@ -256,6 +302,7 @@ do
 	})
 
 	Left:AddButton("Unload UI", function()
+		Library:StopWatermark()
 		Library:Unload()
 	end)
 
@@ -267,9 +314,12 @@ pcall(function()
 	ThemeManager:ApplyTheme("BlackPurple")
 end)
 
+-- Default watermark with FPS
+Library:StartWatermark("LinoriaModded | {fps} FPS")
+
 Library:Notify({
 	Title = "LinoriaModded",
-	Description = "Loaded — black / purple",
+	Description = "Loaded — check UI Settings for fonts / watermark",
 	Time = 3,
 })
-print("[LinoriaModded] ok — Ghost drag toggle in UI Settings")
+print("[LinoriaModded] ok — font picker + watermark in UI Settings; swipe/scroll tab bar for more tabs")

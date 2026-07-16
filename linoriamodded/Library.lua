@@ -6685,7 +6685,8 @@ function Library:CreateWindow(...)
     end
 
     if WindowInfo.Size == UDim2.fromOffset(0, 0) then
-        WindowInfo.Size = if Library.IsMobile then UDim2.fromOffset(550, math.clamp(ViewportSize.Y - 35, 200, 600)) else UDim2.fromOffset(550, 600)
+        -- Wider default so more tabs fit without scrolling (still scrollable if needed)
+        WindowInfo.Size = if Library.IsMobile then UDim2.fromOffset(620, math.clamp(ViewportSize.Y - 35, 200, 600)) else UDim2.fromOffset(700, 600)
     end
 
     Library.NotifySide = WindowInfo.NotifySide
@@ -6772,16 +6773,20 @@ function Library:CreateWindow(...)
 
     local TabArea = Library:Create("ScrollingFrame", {
         ScrollingDirection = Enum.ScrollingDirection.X;
-        CanvasSize = UDim2.new(0, 0, 2, 0);
-        HorizontalScrollBarInset = Enum.ScrollBarInset.Always;
-        AutomaticCanvasSize = Enum.AutomaticSize.XY;
-        ScrollBarThickness = 0;
+        CanvasSize = UDim2.new(0, 0, 0, 0);
+        HorizontalScrollBarInset = Enum.ScrollBarInset.ScrollBar;
+        AutomaticCanvasSize = Enum.AutomaticSize.X;
+        ScrollBarThickness = 3;
+        ScrollBarImageColor3 = Library.AccentColor;
         BackgroundTransparency = 1;
         Position = UDim2.new(0, 8 - WindowInfo.TabPadding, 0, 4);
-        Size = UDim2.new(1, -10, 0, 26);
+        Size = UDim2.new(1, -10, 0, 28);
         ZIndex = 1;
+        Active = true;
         Parent = MainSectionInner;
     })
+    Window.TabArea = TabArea
+    Library:AddToRegistry(TabArea, { ScrollBarImageColor3 = "AccentColor" })
 
     local TabListLayout = Library:Create("UIListLayout", {
         Padding = UDim.new(0, WindowInfo.TabPadding);
@@ -8397,6 +8402,109 @@ Library:GiveSignal(RunService.RenderStepped:Connect(function(Delta)
 end))
 
 ----
+-- Font switching (Plex custom face or built-in Enum fonts)
+Library.AvailableFonts = {
+	"Plex",
+	"Code",
+	"Ubuntu",
+	"SourceSans",
+	"Gotham",
+	"GothamMedium",
+	"Arcade",
+	"Legacy",
+}
+
+function Library:SetUIFont(Name)
+	Name = tostring(Name or "Plex")
+	local EnumMap = {
+		Plex = Enum.Font.Code,
+		Code = Enum.Font.Code,
+		Ubuntu = Enum.Font.Ubuntu,
+		SourceSans = Enum.Font.SourceSans,
+		Gotham = Enum.Font.Gotham,
+		GothamMedium = Enum.Font.GothamMedium,
+		Arcade = Enum.Font.Arcade,
+		Legacy = Enum.Font.Legacy,
+	}
+
+	local UsePlex = (Name == "Plex") and CustomFontFace ~= nil
+	Library.FontFace = UsePlex and CustomFontFace or nil
+	Library.Font = EnumMap[Name] or Enum.Font.Code
+	Library.CurrentFontName = UsePlex and "Plex" or (EnumMap[Name] and Name or "Code")
+
+	if Name == "Plex" and not CustomFontFace then
+		Library.CurrentFontName = "Code"
+		Library:Notify("Plex unavailable (no getcustomasset) — using Code", 3)
+	end
+
+	for _, Inst in ipairs(ScreenGui:GetDescendants()) do
+		if Inst:IsA("TextLabel") or Inst:IsA("TextButton") or Inst:IsA("TextBox") then
+			pcall(function()
+				if Library.FontFace then
+					Inst.FontFace = Library.FontFace
+				else
+					Inst.Font = Library.Font
+				end
+			end)
+		end
+	end
+
+	return Library.CurrentFontName
+end
+
+Library.CurrentFontName = CustomFontFace and "Plex" or "Code"
+
+-- Watermark helpers (FPS / custom format)
+Library.WatermarkEnabled = false
+Library.WatermarkFormat = "LinoriaModded | {fps} FPS"
+Library.WatermarkConnection = nil
+
+function Library:SetWatermarkFormat(Format)
+	Library.WatermarkFormat = tostring(Format or "LinoriaModded | {fps} FPS")
+end
+
+function Library:StartWatermark(Format)
+	if Format then
+		Library:SetWatermarkFormat(Format)
+	end
+	Library.WatermarkEnabled = true
+	Library:SetWatermark(Library.WatermarkFormat:gsub("{fps}", "..."):gsub("{FPS}", "..."))
+
+	if Library.WatermarkConnection then
+		return
+	end
+
+	local Frames, Last = 0, tick()
+	Library.WatermarkConnection = RunService.RenderStepped:Connect(function()
+		if not Library.WatermarkEnabled or Library.Unloaded then
+			return
+		end
+		Frames += 1
+		local Now = tick()
+		if Now - Last >= 0.5 then
+			local Fps = math.floor(Frames / (Now - Last) + 0.5)
+			Frames = 0
+			Last = Now
+			local Text = Library.WatermarkFormat
+				:gsub("{fps}", tostring(Fps))
+				:gsub("{FPS}", tostring(Fps))
+				:gsub("{ping}", "?")
+			Library:SetWatermark(Text)
+		end
+	end)
+end
+
+function Library:StopWatermark()
+	Library.WatermarkEnabled = false
+	Library:SetWatermarkVisibility(false)
+	if Library.WatermarkConnection then
+		Library.WatermarkConnection:Disconnect()
+		Library.WatermarkConnection = nil
+	end
+end
+
 getgenv().Linoria = Library
+getgenv().Toggles = Toggles
+getgenv().Options = Options
 if getgenv().skip_getgenv_linoria ~= true then getgenv().Library = Library end
 return Library
