@@ -3,11 +3,14 @@
   Menu toggle: RightControl / RightShift
 ]]
 
-print("[LinoriaModded] demo start")
+print("[LinoriaModded] demo start v3")
 repeat task.wait() until game:IsLoaded()
 
+local CACHE_BUST = "?v=20260716d"
 local GH = "https://raw.githubusercontent.com/alphamego/roblox-loaders/main/linoriamodded"
 local BASE = (typeof(getgenv) == "function" and getgenv().LINORIAMODDED_URL) or GH
+-- Local files only if you set getgenv().LINORIAMODDED_USE_LOCAL = true (avoids stale executor copies)
+local USE_LOCAL = typeof(getgenv) == "function" and getgenv().LINORIAMODDED_USE_LOCAL == true
 
 local loadstring = loadstring or load
 assert(loadstring, "[LinoriaModded] loadstring missing")
@@ -35,14 +38,14 @@ local function loadFromSource(label, src)
 end
 
 local function tryLocal(path)
-	if readfile and isfile and isfile(path) then
+	if USE_LOCAL and readfile and isfile and isfile(path) then
 		return loadFromSource(path, readfile(path))
 	end
 	return nil
 end
 
 local function fetch(path)
-	return loadFromSource(path, httpGet(BASE .. "/" .. path))
+	return loadFromSource(path, httpGet(BASE .. "/" .. path .. CACHE_BUST))
 end
 
 local Library = tryLocal("linoriamodded/Library.lua") or fetch("Library.lua")
@@ -71,15 +74,16 @@ getgenv().SaveManager = SaveManager
 local Toggles = Library.Toggles
 local Options = Library.Options
 
+-- Tall default Linoria (550x600). Switch to Wide in UI Settings.
 local Window = Library:CreateWindow({
 	Title = "LinoriaModded - Component Showcase",
 	Center = true,
 	AutoShow = true,
 	TabPadding = 8,
 	MenuFadeTime = 0.2,
-	-- Wider so most tabs fit; leftover tabs scroll horizontally (mouse wheel / touch swipe)
-	Size = UDim2.fromOffset(720, 560),
+	Size = UDim2.fromOffset(550, 600),
 })
+Library.WindowSizePreset = "Tall (Default)"
 
 local Tabs = {
 	Controls = Window:AddTab("Controls"),
@@ -211,7 +215,6 @@ do
 		Rounding = 0,
 	})
 
-	-- Use Library.Toggles / Options (not bare globals)
 	if Toggles.ParentToggle and Options.ChildSlider then
 		Options.ChildSlider:SetVisible(false)
 		Toggles.ParentToggle:OnChanged(function()
@@ -235,6 +238,77 @@ do
 	local Left = Tabs.UISettings:AddLeftGroupbox("Window")
 	local Right = Tabs.UISettings:AddRightGroupbox("Theme & Config")
 
+	-- FIRST: Window Size — Tall = classic Linoria, Wide = previous look
+	Left:AddDropdown("WindowSizePreset", {
+		Text = "Window Size",
+		Values = { "Tall (Default)", "Wide" },
+		Default = "Tall (Default)",
+		Tooltip = "Tall (Default) = classic Linoria 550x600. Wide = 720x560.",
+		Callback = function(v)
+			if Library.SetWindowSize then
+				Library:SetWindowSize(v)
+			end
+		end,
+	})
+
+	-- UI Scale (live). Safe if library is older.
+	do
+		local ScalePresets = Library.UIScalePresets or { "Default", "Compact", "Large", "Extra Large" }
+		local CurrentPreset = "Default"
+		if Library.GetUIScalePreset then
+			local Ok, Preset = pcall(function()
+				return Library:GetUIScalePreset()
+			end)
+			if Ok and type(Preset) == "string" and Preset ~= "Custom" then
+				CurrentPreset = Preset
+			end
+		end
+		local SyncingScale = false
+
+		Left:AddDropdown("UIScalePreset", {
+			Text = "UI Scale",
+			Values = ScalePresets,
+			Default = CurrentPreset,
+			Tooltip = "Default = 100%. Compact / Large change overall size. Saves across reloads.",
+			Callback = function(v)
+				if SyncingScale or not Library.SetUIScalePreset then
+					return
+				end
+				SyncingScale = true
+				Library:SetUIScalePreset(v, true)
+				if Options.UIScalePercent and Library.GetUIScalePercent then
+					Options.UIScalePercent:SetValue(Library:GetUIScalePercent())
+				end
+				SyncingScale = false
+			end,
+		})
+
+		Left:AddSlider("UIScalePercent", {
+			Text = "UI Scale %",
+			Default = (Library.GetUIScalePercent and Library:GetUIScalePercent()) or 100,
+			Min = 70,
+			Max = 150,
+			Rounding = 0,
+			Tooltip = "Fine-tune size. Saved automatically.",
+			Callback = function(v)
+				if SyncingScale or not Library.SetUIScale then
+					return
+				end
+				SyncingScale = true
+				Library:SetUIScale(v, true)
+				if Library.GetUIScalePreset and Options.UIScalePreset then
+					local Preset = Library:GetUIScalePreset()
+					if Preset ~= "Custom" and Options.UIScalePreset.Value ~= Preset then
+						Options.UIScalePreset:SetValue(Preset)
+					end
+				end
+				SyncingScale = false
+			end,
+		})
+	end
+
+	Left:AddDivider()
+
 	Left:AddToggle("GhostDragToggle", {
 		Text = "Ghost drag outline",
 		Default = Library.GhostDrag == true,
@@ -252,56 +326,16 @@ do
 		end,
 	})
 
+	pcall(function()
+		Library:SetUIFont("Code")
+	end)
+
 	Left:AddDropdown("UIFontPicker", {
 		Text = "UI Font",
-		Values = Library.AvailableFonts or { "Plex", "Code", "Ubuntu", "SourceSans", "Gotham", "Arcade" },
-		Default = Library.CurrentFontName or "Plex",
+		Values = Library.AvailableFonts or { "Code", "Plex", "Ubuntu", "SourceSans", "Gotham", "Arcade" },
+		Default = "Code",
 		Callback = function(v)
 			Library:SetUIFont(v)
-		end,
-	})
-
-	-- UI Scale: Default = classic 100%, Compact/Large resize live. Saved to config + ui_scale.txt
-	local ScalePresets = Library.UIScalePresets or { "Default", "Compact", "Large", "Extra Large" }
-	local CurrentPreset = Library:GetUIScalePreset()
-	if CurrentPreset == "Custom" then
-		CurrentPreset = "Default"
-	end
-	local SyncingScale = false
-
-	Left:AddDropdown("UIScalePreset", {
-		Text = "UI Scale",
-		Values = ScalePresets,
-		Default = CurrentPreset,
-		Tooltip = "Default = normal Linoria size. Compact = smaller. Large / Extra Large = bigger. Saves automatically.",
-		Callback = function(v)
-			if SyncingScale then return end
-			SyncingScale = true
-			Library:SetUIScalePreset(v, true)
-			if Options.UIScalePercent then
-				Options.UIScalePercent:SetValue(Library:GetUIScalePercent())
-			end
-			SyncingScale = false
-		end,
-	})
-
-	Left:AddSlider("UIScalePercent", {
-		Text = "UI Scale %",
-		Default = Library:GetUIScalePercent(),
-		Min = 70,
-		Max = 150,
-		Rounding = 0,
-		Compact = false,
-		Tooltip = "Fine-tune scale. Saved with your config and across reloads.",
-		Callback = function(v)
-			if SyncingScale then return end
-			SyncingScale = true
-			Library:SetUIScale(v, true)
-			local Preset = Library:GetUIScalePreset()
-			if Options.UIScalePreset and Preset ~= "Custom" and Options.UIScalePreset.Value ~= Preset then
-				Options.UIScalePreset:SetValue(Preset)
-			end
-			SyncingScale = false
 		end,
 	})
 
@@ -332,6 +366,12 @@ do
 		end,
 	})
 
+	Left:AddButton("Reset watermark pos", function()
+		if Library.ResetWatermarkPosition then
+			Library:ResetWatermarkPosition()
+		end
+	end)
+
 	Left:AddDropdown("NotifySide", {
 		Text = "Notify side",
 		Values = { "Left", "Right" },
@@ -358,12 +398,11 @@ pcall(function()
 	ThemeManager:ApplyTheme("BlackPurple")
 end)
 
--- Default watermark with FPS
 Library:StartWatermark("LinoriaModded | {fps} FPS")
 
 Library:Notify({
 	Title = "LinoriaModded",
-	Description = "Loaded — check UI Settings for fonts / watermark",
-	Time = 3,
+	Description = "UI Settings top: Window Size (Tall/Wide) + UI Scale",
+	Time = 4,
 })
-print("[LinoriaModded] ok — font picker + watermark in UI Settings; swipe/scroll tab bar for more tabs")
+print("[LinoriaModded] ok v3 — Window Size + UI Scale at top; font default Code; tall 550x600")

@@ -6401,7 +6401,8 @@ end
 do
     local WatermarkOuter = Library:Create("Frame", {
         BorderColor3 = Color3.new(0, 0, 0);
-        Position = UDim2.new(0, 420, 0, -40);
+        AnchorPoint = Vector2.new(0.5, 0);
+        Position = UDim2.new(0.5, 120, 0, 8);
         Size = UDim2.new(0, 176, 0, 24);
         ZIndex = 200;
         Visible = false;
@@ -6765,8 +6766,8 @@ function Library:CreateWindow(...)
     end
 
     if WindowInfo.Size == UDim2.fromOffset(0, 0) then
-        -- Wider default so more tabs fit without scrolling (still scrollable if needed)
-        WindowInfo.Size = if Library.IsMobile then UDim2.fromOffset(620, math.clamp(ViewportSize.Y - 35, 200, 600)) else UDim2.fromOffset(700, 600)
+        -- Tall default Linoria proportions (use UI Settings → Window Size for Wide)
+        WindowInfo.Size = if Library.IsMobile then UDim2.fromOffset(550, math.clamp(ViewportSize.Y - 35, 200, 600)) else UDim2.fromOffset(550, 600)
     end
 
     Library.NotifySide = WindowInfo.NotifySide
@@ -8484,8 +8485,8 @@ end))
 ----
 -- Font switching (Plex custom face or built-in Enum fonts)
 Library.AvailableFonts = {
-	"Plex",
 	"Code",
+	"Plex",
 	"Ubuntu",
 	"SourceSans",
 	"Gotham",
@@ -8495,7 +8496,7 @@ Library.AvailableFonts = {
 }
 
 function Library:SetUIFont(Name)
-	Name = tostring(Name or "Plex")
+	Name = tostring(Name or "Code")
 	local EnumMap = {
 		Plex = Enum.Font.Code,
 		Code = Enum.Font.Code,
@@ -8532,7 +8533,64 @@ function Library:SetUIFont(Name)
 	return Library.CurrentFontName
 end
 
-Library.CurrentFontName = CustomFontFace and "Plex" or "Code"
+-- Code is the default font (Plex is optional via UI Settings)
+Library.CurrentFontName = "Code"
+Library.FontFace = nil
+Library.Font = Enum.Font.Code
+
+Library.WindowSizePresets = {
+	["Tall (Default)"] = Vector2.new(550, 600),
+	["Wide"] = Vector2.new(720, 560),
+}
+
+function Library:SetWindowSize(WidthOrPreset, Height)
+	local Width = WidthOrPreset
+	if type(WidthOrPreset) == "string" then
+		local Preset = Library.WindowSizePresets[WidthOrPreset]
+		if not Preset then
+			Preset = Library.WindowSizePresets["Tall (Default)"]
+		end
+		Width, Height = Preset.X, Preset.Y
+		Library.WindowSizePreset = WidthOrPreset
+	else
+		Width = tonumber(WidthOrPreset) or 550
+		Height = tonumber(Height) or 600
+		Library.WindowSizePreset = "Custom"
+	end
+
+	if LibraryMainOuterFrame then
+		local Size = UDim2.fromOffset(Width, Height)
+		LibraryMainOuterFrame.Size = Size
+		-- keep roughly centered
+		LibraryMainOuterFrame.Position = UDim2.new(
+			0.5,
+			-Width / 2,
+			0.5,
+			-Height / 2
+		)
+	end
+
+	if typeof(writefile) == "function" then
+		pcall(function()
+			if typeof(makefolder) == "function" then
+				if typeof(isfolder) ~= "function" or not isfolder("LinoriaModded") then
+					makefolder("LinoriaModded")
+				end
+			end
+			writefile("LinoriaModded/window_size.txt", string.format("%s|%d|%d", tostring(Library.WindowSizePreset or "Tall (Default)"), Width, Height))
+		end)
+	end
+
+	return Width, Height
+end
+
+function Library:ResetWatermarkPosition()
+	if not Library.Watermark then
+		return
+	end
+	Library.Watermark.AnchorPoint = Vector2.new(0.5, 0)
+	Library.Watermark.Position = UDim2.new(0.5, 120, 0, 8)
+end
 
 -- Watermark helpers (FPS / custom format)
 Library.WatermarkEnabled = false
@@ -8548,6 +8606,7 @@ function Library:StartWatermark(Format)
 		Library:SetWatermarkFormat(Format)
 	end
 	Library.WatermarkEnabled = true
+	Library:ResetWatermarkPosition()
 	Library:SetWatermark(Library.WatermarkFormat:gsub("{fps}", "..."):gsub("{FPS}", "..."))
 
 	if Library.WatermarkConnection then
