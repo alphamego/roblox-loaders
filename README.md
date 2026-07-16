@@ -33,6 +33,26 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/alphamego/roblox-load
 
 Menu toggle: **End**
 
+## LinoriaCustomD
+
+Blue-accent Linoria fork with mobile-friendly window sizing and optional custom font (`getcustomasset`).
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/alphamego/roblox-loaders/main/linoriacustomd_loader.lua"))()
+```
+
+Menu toggle: **RightControl** / **RightShift**
+
+## ZeroLinoria
+
+Red/rainbow themed Linoria with rounded UI (`ApplyDesign`). Shows Solance subscription days if auth is on `localhost:9999` (optional, does not block the menu).
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/alphamego/roblox-loaders/main/zerolinoria_loader.lua"))()
+```
+
+Menu toggle: **RightControl** / **RightShift**
+
 ## Local
 
 ```lua
